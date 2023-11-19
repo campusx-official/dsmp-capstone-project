@@ -178,10 +178,15 @@ df.to_csv('gurgaon_properties_cleaned_v1.csv',index=False)
 
 
 
-#Feature engineering
-#Our focus is feature eng. of areaWithType,additionalRoom,agePossession,furnishDetails,features
+########################################Feature engineering##################################################################
+
+#Our focus is feature eng. of 1.areaWithType, 2.additionalRoom, 3.agePossession, 4.furnishDetails, 5.features
 df = pd.read_csv('gurgaon_properties_cleaned_v1.csv')
 
+
+
+
+##   1.areaWithType    ##
 # This function extracts the Super Built up area
 def get_super_built_up_area(text):
     match = re.search(r'Super Built up area (\d+\.?\d*)',text)
@@ -255,26 +260,312 @@ df.isnull().sum()
 df.update(all_nan_df)
 df.isnull().sum()
 
-#additionalRoom
+
+
+
+##   2.additionalRoom    ##
 df['additionalRoom'].value_counts()
 #List of new columns to be created
 new_cols = ['study room','servant room','store room','pooja room','others']
 for col in new_cols:
     df[col] = df['additionalRoom'].str.contains(col).astype(int)
 
-#agePossession - Every variable need to paas through this two command for the first overview
+
+
+
+
+##   3.agePossession    ## - Every variable need to paas through this two command for the first overview
 df['agePossession'].value_counts()
 df['agePossession'].isnull().sum()
 d=df['agePossession'].value_counts()[df['agePossession'].value_counts()>=0]
-d.to_csv('value_counts.csv')    #to take value_counts output in excel
-
-'2024-05-01 00:00:00'.split(' ')[-1]
+#d.to_csv('value_counts.csv')    #to take value_counts output in excel
+#v=int('2024-12-01 00:00:00'.split(" ")[-1])
 def categorize_age_possession(value):
-    if pd.isna(value): return 'Undefined'
-    if '0 to 1 Year Old' in value or 'Within 6 months' in value or 'Within 3 months' in value: return 'New Property'
-    if '1 to 5 Year Old' in value: return 'Relatively New'
-    if '5 to 10 Year Old' in value: return 'Moderately Old'
-    if '10+ Year Old' in value: return 'Old Property'
-    if 'Under Construction' in value or 'By' in value: return 'Under Construction' 
+    if pd.isna(value):
+        return "Undefined"
+    if "0 to 1 Year Old" in value or "Within 6 months" in value or "Within 3 months" in value:
+        return "New Property"
+    if "1 to 5 Year Old" in value:
+        return "Relatively New"
+    if "5 to 10 Year Old" in value:
+        return "Moderately Old"
+    if "10+ Year Old" in value:
+        return "Old Property"
+    if "Under Construction" in value or "By" in value:
+        return "Under Construction"
+    try:
+        # For entries like 'May 2024'
+        int(value.split(" ")[-1])
+        return "Under Construction"
+    except:
+        return "Undefined"
+df['agePossession1'] = df['agePossession'].apply(categorize_age_possession)
+df['agePossession1'].value_counts()   
+
+
+
+
+
+
+##   4.furnishDetails    ##
+df['furnishDetails'].str.replace('[','').str.replace(']','').str.replace("'",'').str.split(', ')
+type(df['furnishDetails'][1].replace('[','').replace(']','').replace("'",'').split(', '))         #Output -> list
+df['furnishDetails'][1].replace('[','').replace(']','').replace("'",'').split(', ')[3]            #Output -> 1 Geyser
+
+# Extract all unique furnishings from the furnishDetails column
+#DataFrame column -> string -> list -> list.extend() -> set ->List COmprehension
+all_furnishing=[]
+for detail in df['furnishDetails'].dropna():
+    furnishings = detail.replace('[','').replace(']','').replace("'",'').split(', ')
+    all_furnishing.extend(furnishings)
+unique_furnishings = list(set(all_furnishing))
+# Simplify the furnishings list by removing "No" prefix and numbers by using List comprehension F=[Output loop condition]
+columns_to_include = [re.sub(r'No |\d+','', furnishings).strip() for furnishings in unique_furnishings]
+columns_to_include = list(set(columns_to_include))   # Get unique furnishings
+columns_to_include = [furnishings for furnishings in columns_to_include if furnishings]
+
+# Define a function to extract the count of a furnishing from the furnishDetails
+def get_furnishing_count(details,furnishing):
+    if isinstance(details,str):                      #if detail datatype is string 
+        if f"No {furnishing}" in details:
+            return 0
+        pattern=re.compile(f"(\d+) {furnishing}")
+        match=pattern.search(details)
+        if match:
+            return int(match.group(1))
+        elif furnishing in details:
+            return 1
+    return 0   
+
+for furnishing in columns_to_include:
+    df[furnishing]=df['furnishDetails'].apply(lambda x: get_furnishing_count(x,furnishing))
+
+# Create the new dataframe with the required columns
+furnishings_df = df[['furnishDetails'] + columns_to_include]     #since columns_to_include is a list thus it works to sum the list
+furnishings_df.shape    
+furnishings_df.drop(columns=['furnishDetails'],inplace=True)
+#This furnishings_df data is used in k-means clustering to get an idea a row will assign to which cluster
+#Firstly, on the basis of k-means clustering we will figure out how many optimal cluster is required to group the data
+#To find an optimal cluster we require to find the speed of slope of the graph is steadily decrease
+
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(furnishings_df)
+
+
+wcss_reduced = []
+
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)
+    kmeans.fit(scaled_data)
+    wcss_reduced.append(kmeans.inertia_)
+
+# Plot the results
+plt.figure(figsize=(12, 8))
+plt.plot(range(1,11), wcss_reduced, marker='o', linestyle='--')
+plt.title('Elbow Method For Optimal Number of Clusters (Reduced Range)')
+plt.xlabel('Number of Clusters')
+plt.ylabel('WCSS')
+plt.grid(True)
+plt.show()
+
+n_clusters = 3       #on looking at the graph it is decided to take 3 as optimal class, and also by intution it is giving furnished, semi-furnished, Unfurnished
+
+# Fit the KMeans model n_clusters = 3
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+kmeans.fit(scaled_data)
+
+# Predict the cluster assignments for each row
+cluster_assignments = kmeans.predict(scaled_data)
+counts = np.unique(cluster_assignments, return_counts=True)
+
+df = df.iloc[:,:-18]
+df['furnishing_type'] = cluster_assignments
+df.loc[[3344,3054,3400,3179,3397],['furnishDetails','furnishing_type']]
+# 0 -> unfurnished
+# 1 -> semifurnished
+# 2 -> furnished
+
+
+
+
+##   5.features   ##
+df[['society','features']].sample(5)
+df['features'].value_counts()
+df['features'].isnull().sum()
+type(df['features'][1])
+
+#We can fetch missing data of features from apartment data
+#sabse pehle fist data ko filter kiya on the basis of column jis mein null values hai
+#uske baad dono data ko merge kiya on the basis of column name, aur uss merge dataset ko maine dataframe ke form mein nhi liya usko series form mein le liya
+#phir maine loc use krke main dataset ke column mein row-wise data fill kar diya 
+
+app_df = pd.read_csv('appartments.csv')
+app_df.info()
+app_df['PropertyName']=app_df['PropertyName'].str.lower()
+
+temp_df = df[df['features'].isnull()]                   #635
+
+x = temp_df.merge(app_df,left_on='society',right_on='PropertyName',how='left')['TopFacilities']          #481 null value and only series of TopFacilities is there
+
+df['features'].isnull().sum()                    #635
+df.loc[temp_df.index,'features'] = x.values      
+df['features'].isnull().sum()                    #481
+
+# Convert the string representation of lists in the 'features' column to actual lists
+from sklearn.preprocessing import MultiLabelBinarizer
+import ast
+# Convert the string representation of lists in the 'features' column to actual lists
+df['features_list'] = df['features'].apply(lambda x: ast.literal_eval(x) if pd.notnull(x) and x.startswith('[') else [])
+type(df['features_list'][4])                #it has converted string into list
+
+# Use MultiLabelBinarizer to convert the features list into a binary matrix
+mlb = MultiLabelBinarizer()
+features_binary_matrix = mlb.fit_transform(df['features_list'])
+
+# Convert the binary matrix into a DataFrame
+features_binary_df = pd.DataFrame(features_binary_matrix, columns=mlb.classes_)
+features_binary_df.shape
+features_binary_df.to_csv('features_binary_df.csv')
+
+#First Approach: k means Clustering
+wcss_reduced = []
+
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)
+    kmeans.fit(features_binary_df)
+    wcss_reduced.append(kmeans.inertia_)
+# Plot the results
+plt.figure(figsize=(12, 8))
+plt.plot(range(1,11), wcss_reduced, marker='o', linestyle='--')
+plt.title('Elbow Method For Optimal Number of Clusters (Reduced Range)')
+plt.xlabel('Number of Clusters')
+plt.ylabel('WCSS')
+plt.grid(True)
+plt.show()    
+#2 cluster is enough by looking at the graph - we were planning for 3 clusters - Luxurious, semi-luxurious, budget society. Also if we are assigning 
+#2 cluster to data then 1 cluster is taking the Nan values and other cluster is filled values.
+
+#So, we have decided to give a luxury score to each society
+# Define the weights for each feature as provided
+# Assigning weights based on perceived luxury contribution
+weights = {
+    '24/7 Power Backup': 8,
+    '24/7 Water Supply': 4,
+    '24x7 Security': 7,
+    'ATM': 4,
+    'Aerobics Centre': 6,
+    'Airy Rooms': 8,
+    'Amphitheatre': 7,
+    'Badminton Court': 7,
+    'Banquet Hall': 8,
+    'Bar/Chill-Out Lounge': 9,
+    'Barbecue': 7,
+    'Basketball Court': 7,
+    'Billiards': 7,
+    'Bowling Alley': 8,
+    'Business Lounge': 9,
+    'CCTV Camera Security': 8,
+    'Cafeteria': 6,
+    'Car Parking': 6,
+    'Card Room': 6,
+    'Centrally Air Conditioned': 9,
+    'Changing Area': 6,
+    "Children's Play Area": 7,
+    'Cigar Lounge': 9,
+    'Clinic': 5,
+    'Club House': 9,
+    'Concierge Service': 9,
+    'Conference room': 8,
+    'Creche/Day care': 7,
+    'Cricket Pitch': 7,
+    'Doctor on Call': 6,
+    'Earthquake Resistant': 5,
+    'Entrance Lobby': 7,
+    'False Ceiling Lighting': 6,
+    'Feng Shui / Vaastu Compliant': 5,
+    'Fire Fighting Systems': 8,
+    'Fitness Centre / GYM': 8,
+    'Flower Garden': 7,
+    'Food Court': 6,
+    'Foosball': 5,
+    'Football': 7,
+    'Fountain': 7,
+    'Gated Community': 7,
+    'Golf Course': 10,
+    'Grocery Shop': 6,
+    'Gymnasium': 8,
+    'High Ceiling Height': 8,
+    'High Speed Elevators': 8,
+    'Infinity Pool': 9,
+    'Intercom Facility': 7,
+    'Internal Street Lights': 6,
+    'Internet/wi-fi connectivity': 7,
+    'Jacuzzi': 9,
+    'Jogging Track': 7,
+    'Landscape Garden': 8,
+    'Laundry': 6,
+    'Lawn Tennis Court': 8,
+    'Library': 8,
+    'Lounge': 8,
+    'Low Density Society': 7,
+    'Maintenance Staff': 6,
+    'Manicured Garden': 7,
+    'Medical Centre': 5,
+    'Milk Booth': 4,
+    'Mini Theatre': 9,
+    'Multipurpose Court': 7,
+    'Multipurpose Hall': 7,
+    'Natural Light': 8,
+    'Natural Pond': 7,
+    'Park': 8,
+    'Party Lawn': 8,
+    'Piped Gas': 7,
+    'Pool Table': 7,
+    'Power Back up Lift': 8,
+    'Private Garden / Terrace': 9,
+    'Property Staff': 7,
+    'RO System': 7,
+    'Rain Water Harvesting': 7,
+    'Reading Lounge': 8,
+    'Restaurant': 8,
+    'Salon': 8,
+    'Sauna': 9,
+    'Security / Fire Alarm': 9,
+    'Security Personnel': 9,
+    'Separate entry for servant room': 8,
+    'Sewage Treatment Plant': 6,
+    'Shopping Centre': 7,
+    'Skating Rink': 7,
+    'Solar Lighting': 6,
+    'Solar Water Heating': 7,
+    'Spa': 9,
+    'Spacious Interiors': 9,
+    'Squash Court': 8,
+    'Steam Room': 9,
+    'Sun Deck': 8,
+    'Swimming Pool': 8,
+    'Temple': 5,
+    'Theatre': 9,
+    'Toddler Pool': 7,
+    'Valet Parking': 9,
+    'Video Door Security': 9,
+    'Visitor Parking': 7,
+    'Water Softener Plant': 7,
+    'Water Storage': 7,
+    'Water purifier': 7,
+    'Yoga/Meditation Area': 7
+}
+weights.keys()
+weights.values()
+# Calculate luxury score for each row of features_binary_df
+luxury_score = features_binary_df[list(weights.keys())].multiply(list(weights.values())).sum(axis=1)
+type(luxury_score)
+df['luxury_score'] = luxury_score
+df.shape
+df.sample(5)
+         
 
 
