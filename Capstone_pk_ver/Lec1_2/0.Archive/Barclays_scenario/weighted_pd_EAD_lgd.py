@@ -30,6 +30,9 @@ from functools import reduce
 dfs=[bl_1,d1_1,d2_1,u1_1, u2_1]
 combined_df=reduce(lambda a,b:pd.merge(a,b,on='logical_acc_id',how='left'),dfs)
 
+combined_df.describe()
+column_list = combined_df.columns.tolist()
+
 for i in range(1,13):
     combined_df[f'weighted_pd_{i}'] = 0.3*combined_df[f'bl_Prob_Def_{i}'] + 0.1*combined_df[f'd1_Prob_Def_{i}'] + 0.2*combined_df[f'd2_Prob_Def_{i}'] + 0.2*combined_df[f'u1_Prob_Def_{i}'] + 0.2*combined_df[f'u2_Prob_Def_{i}']
     combined_df[f'weighted_EAD_{i}'] = 0.3*combined_df[f'bl_EAD_LT_{i}'] + 0.1*combined_df[f'd1_EAD_LT_{i}'] + 0.2*combined_df[f'd2_EAD_LT_{i}'] + 0.2*combined_df[f'u1_EAD_LT_{i}'] + 0.2*combined_df[f'u2_EAD_LT_{i}']
