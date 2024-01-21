@@ -13,27 +13,33 @@ os.getcwd()
 #dir
 #os.chdir(path)
 
+
 # reading data
 df=pd.read_excel('flats.xlsx')
 df.shape
 df.info()    #to check missing value and datatype of each columns
 df.duplicated().sum()
 df['property_id'].duplicated().sum()      #duplicate account_id
+dupout=df[df['property_id'].duplicated()]
 df = df.rename(columns={'area':'price_per_sqft'})
+#df.rename(str.lower,axis=1,inplace=True)
 df['society'].value_counts()
 df['society'].value_counts().shape
 
 #society variable -> Wanted to eliminate decimal number(3.8),?space?, symbol like star at the end of sentence and also make it lower for uniformity
 import re
 df['society'] = df['society'].apply(lambda x: re.sub(r'\d+(\.\d+)?\s?★', '', str(x)).strip()).str.lower()
+df['society'].apply(lambda x:str(x).split(' '))[0]      #Series[0]
+df['society'].apply(lambda x:str(x).split(' ')[0])      #Series each element str[0]
 
 #price variable converted string Lac to Crore to list and applied a function as a object
 df['price'].value_counts()     #There are lacs, crore, Price on request variable
+df['price']
 df = df[df['price'] != 'Price on Request']
 def treat_price(x):
     if type(x) == float: return x
     else:
-        if x[1] == 'Lac': return round(float(x[0])/100,2)
+        if x[1] == 'Lac': return round(float(x[0])/100,2)       #Here x is a string
         else: return round(float(x[0]),2)
 df['price']=df['price'].str.split(' ').apply(treat_price)
 
@@ -232,7 +238,7 @@ all_nan_index = df[((df['super_built_up_area'].isnull()) & (df['built_up_area'].
 #Data knowledge -> 
 #Carpet area
 #Built up area -> Carpet area + Wall + balcony
-#Super Built up area -> Built up area + staircase + lift area + Garden
+#Super Built up area -> Built up area + staircase + lift area
 #Plot area will come under Built area, Also Plot area is measured in yard in data
 #Thus, we need to plot area information in Built up area
 df[(df['areaWithType'].str.contains('Plot')) & (df['built_up_area'].isnull())].sample(5)
@@ -565,7 +571,5 @@ luxury_score = features_binary_df[list(weights.keys())].multiply(list(weights.va
 type(luxury_score)
 df['luxury_score'] = luxury_score
 df.shape
-df.sample(5)
-         
-
-
+df.info()
+df.to_csv('gurgaon_properties_cleaned_v2.csv')
