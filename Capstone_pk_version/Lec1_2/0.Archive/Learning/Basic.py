@@ -7,6 +7,13 @@ print([1,34,4]+[94.98,3,9])
 #String converted to list by split function and uses 'apply' command taking input function as a object
 df['price']=df['price'].str.split(' ').apply(treat_price)
 np.NaN or None #Both represent missing, however np.NaN is used as a missing for numerical operation while None is more general and commonly used to represent absence or missing values in Python objects
+a=input("kuch input do bhai: ")
+print("output: ", a)
+#Output and path joining
+df.to_csv('gurgaon_properties_cleaned_v2.csv')
+Path="C:/Users/Piyush/OneDrive/Desktop/tut_python"
+file_path = os.path.join(Path, "v_300.csv")
+v_3.to_csv(file_path)
 
 #If s is string, then what this both refers s.python_command() and python_command(s)?
 #s.python_command(): -> python_command behaving as an inbuilt function under class s. s may be string, List, dictionary
