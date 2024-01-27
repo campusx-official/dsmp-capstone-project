@@ -143,7 +143,13 @@ df.shape is a tuple and not list. So it cannot be edited/change by me.
 4.type(df['facing'][1])  => whether it is list or string we can do treatment on the basis of that
 5.df['facing'].sample(5) => Look at the values bcoz, value_counts will give so many categories which is of no use thus look at the elements of columns
 6.df.duplicates().sum()  => To check in the overall data whether it contains duplicates rows
+7. If else condition-> df['attrition']=np.where(df['event']=='Close',1,0)
 #For every column we need to check above six thing
+
+#proc sql group by
+final_attr_seg=df.groupby(['segment']).agg({'act_bal_cap':'mean',
+                                            'pred_bal_cap':'mean',
+                                            'attrition':'count'}).reset_index()
 
 #value_count jab bhut zyada ho toh usko bhi club krke modified value_count bana sakte hai in form of dictionaries
 
