@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 #CONTENT - PRINT
 #Print command read the string, number, list as it is. And output the word as a list, string and number
 #Print command output ko kisi khaas format mein sentence likhta hai {} {}.format. Jo output string jaisa dikhta hai
@@ -9,11 +11,6 @@ df['price']=df['price'].str.split(' ').apply(treat_price)
 np.NaN or None #Both represent missing, however np.NaN is used as a missing for numerical operation while None is more general and commonly used to represent absence or missing values in Python objects
 a=input("kuch input do bhai: ")
 print("output: ", a)
-#Output and path joining
-df.to_csv('gurgaon_properties_cleaned_v2.csv')
-Path="C:/Users/Piyush/OneDrive/Desktop/tut_python"
-file_path = os.path.join(Path, "v_300.csv")
-v_3.to_csv(file_path)
 
 #If s is string, then what this both refers s.python_command() and python_command(s)?
 #s.python_command(): -> python_command behaving as an inbuilt function under class s. s may be string, List, dictionary
@@ -233,3 +230,114 @@ rows = 5
 cols = 3
 null_df = pd.DataFrame(np.nan, index=range(rows), columns=range(cols))
 null_df.iloc[1:3,0:2]=10
+
+#Working with date and time variable
+score_month = 202311
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+year=int(str(score_month)[0:4])
+month=int(str(score_month)[4:6])
+day=1
+dt=(datetime (year,month,day) + relativedelta(months=month))
+dt_1=dt.strftime('%Y%m')
+dt_2=int(dt_1)
+dt_3=dt.strftime("%Y-%m-%d")
+dt_4=dt.strftime("%d/%m/%Y")
+type(dt_4)
+
+#Python has dtype datetime64 like int,float,string
+#It's format is like 2024-01-10
+#Changes 01/10/2024 to 2024-01-10
+rows = 5
+cols = 3
+null_df = pd.DataFrame(np.nan, index=range(rows), columns=range(cols))
+null_df.iloc[1:3,0:2]=10
+null_df_1=null_df.rename(columns={0:'col1'})
+null_df_1.loc[0,'col1']= dt_4
+null_df_1.loc[1,'col1']= dt_4
+null_df_1.loc[2,'col1']= dt_4
+null_df_1.info()
+null_df_1['col1']=pd.to_datetime(null_df_1['col1']) 
+type(null_df_1['col1'][0])
+null_df_1.info()
+
+#How to get end day of month and difference of month??
+#dt_end=datetime (year,month,day) + relativedelta(months=month))
+
+#Output and path joining
+df.to_csv('gurgaon_properties_cleaned_v2.csv')
+Path="C:/Users/Piyush/OneDrive/Desktop/tut_python"
+file_path = os.path.join(Path, "v_300.csv")
+v_3.to_csv(file_path)
+
+import os
+os.getcwd()
+os.chdir(Path)
+#Reading excel file having multiple sheet, sas file without importing sas7bdat and importing code and {}->format( , , ) and %s->%( , , )
+os.chdir(r'C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning')
+date=202311
+bl_sas=pd.read_sas(r"C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning/{}/{}_v1/bl_d_{}.sas7bdat".format(date,date,date),format='sas7bdat',encoding='')
+bl_sas_latin=pd.read_sas(r"C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning/%s/%s_v1/file_%s.sas7bdat" %(date,date,date),format='sas7bdat',encoding='latin1')
+file_excel=pd.read_excel(r'C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning/{}/{}_v1/file_{}.xlsx'.format(date,date,date),sheet_name=None,engine='openpyxl')
+bl_sas_latin=pd.read_excel(r"C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning/%s/%s_v1/file_%s.xlsx" %(date,date,date),sheet_name=None,engine='openpyxl')
+
+file_excel.keys()
+file_excel.values()
+file_excel.items()
+num=file_excel['bl']['Prob_Def_4'][1]
+type(file_excel)        #dict
+type(file_excel['bl'])  #DataFrame
+type(file_excel['bl']['Prob_Def_4'])    #Series
+type(file_excel['bl']['Prob_Def_4'][1]) #float64
+#Reading code or importing code
+F=__import__('func'+str(date))
+type(F)
+F.is_even(81)
+F.is_even(5000)
+
+
+#Writing excel file with multiple sheet
+other_path = r'C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning'
+bl=pd.read_excel(other_path + '/bl.xlsx')
+d1=pd.read_excel(other_path + '/d1.xlsx')
+d2=pd.read_excel(other_path + '/d2.xlsx')
+u1=pd.read_excel(other_path + '/u1.xlsx')
+u2=pd.read_excel(other_path + '/u2.xlsx')
+bl=bl.set_index('logical_acc_id')   #Indexes automatically comes as a output in python.Thus, to have consistency in datasets we need to ensure no automatic indexes should present.
+date=202311
+os.chdir("C:/Users/Piyush/OneDrive/Documents/GitHub/dsmp-capstone-project/Capstone_pk_version/Lec1_2/0.Archive/Learning/{}/{}_v1/".format(date,date))
+with pd.ExcelWriter('file_{}.xlsx'.format(date)) as writer:
+    bl.to_excel(writer,sheet_name='bl')
+    d1.to_excel(writer,sheet_name='d1')
+    d2.to_excel(writer,sheet_name='d2')
+    u1.to_excel(writer,sheet_name='u1')
+    u2.to_excel(writer,sheet_name='u2')
+
+#Popularly used
+bl.columns
+type(bl.columns)            #It is pandas.Index  
+bl.columns=[col.lower() for col in bl.columns]  #ran successfully
+bl.shape  
+bl.shape[1]=361             #Error:'tuple' object does not support item assignment
+
+del bl_1,bl_sas_latin,file_excel            #deleting the datasets to empty the memory
+bl_drop=bl.drop(columns=['lgd_pred_120'])    #like rename
+bl.lgd_pred_117                              #new way of choosing column
+bl.lgd_pred_117.mean()
+bl.describe().transpose()
+bl['lgd_pred_120'].loc[bl['lgd_pred_120']>0.5] =10000   #without creating new column replace the rows value
+
+bl['ranking'] = pd.qcut(bl['prob_def_1'], q=10, labels=range(1, 11))
+bl[['ranking','prob_def_1']].groupby('ranking').describe()
+
+pick_two_col=dict(zip(bl['lgd_pred_120'],u1['Prob_Def_1'])) #zip is also a datatype
+bl_drop=(u1[['logical_acc_id','Prob_Def_1']]).set_index('logical_acc_id').to_dict()    #like rename
+
+pivot=pd.pivot_table(bl,columns='ranking',values='prob_def_1',index='ranking_1',aggfunc='count')
+pd.melt
+bl['ranking_1']=bl['ranking'].shift(-1)
+
+
+
+
+

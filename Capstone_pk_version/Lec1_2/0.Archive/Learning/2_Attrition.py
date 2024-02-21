@@ -16,6 +16,8 @@ df['act_bal_cap']=df['act_bal']/df['ead_cap']
 df['pred_bal_cap']=df['pred_bal']/df['ead_cap']
 final_attr=df.groupby(['logical_acc_num','segment']).agg({'act_bal_cap':'mean',
                                               'pred_bal_cap':'mean',}).reset_index()
-final_attr_seg=df.groupby(['segment']).agg({'act_bal_cap':'mean',
+final_attr_seg=df.groupby('segment').agg({'act_bal_cap':'mean',
                                             'pred_bal_cap':'mean',
                                             'attrition':'count'}).reset_index()
+#how to name these
+final_attr_seg=df.groupby('segment').agg(actual=('act_bal_cap','mean'),predicted=('pred_bal_cap','mean')).reset_index()
