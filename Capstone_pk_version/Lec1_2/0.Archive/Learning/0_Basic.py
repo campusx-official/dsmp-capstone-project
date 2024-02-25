@@ -67,6 +67,15 @@ series_data[5:7]                      #yeh to 1darray hota hai toh kaam chal jaa
 dataframe_data.iloc[5:7,0:]           #isme loc and iloc ka sahara lena padta hai to extract a patch of rows and column
 dataframe_data.values[5][7]                  #df.values is a 2d-array thus it traverse like an arrays
 
+"""
+datatype like int, float, string
+Haan, list aur dictionary bhi Python mein data types hote hain. Yeh dono container data types hote hain jo multiple values ko store karne ki capability rakhte hain.
+
+1. storing the individual values like int, float,string 
+2. collection of object like storing the collection of int,float,string, list, dictionary, user- defined object 
+
+"""
+
 #Dictionary and Series and DataFrame difference?
 #Dictionaries D has D.keys() and D.values() while Series S has S.index and S.values. without brackets
 #D.keys() type are dict_keys and D.values() type are dict_values. Both are not of list type
@@ -120,6 +129,17 @@ df.shape is a tuple and not list. So it cannot be edited/change by me.
 #Dictionary is also flexible like list- Accessing, Adding,editing,deleting
 #List and Tuples are ordered collections of elements" means that the elements are stored in a specific sequence, and you can access or retrieve them based on their position in the collection using indices.
 
+d={'p1':'I','p2':'me','p3':'mine'}
+d[1]
+d['p2']
+for i in d:
+    print(i)            #print keys
+    print(d[i])         #print values
+
+d.keys()
+d.values()  
+
+
 #if-else mein 'then' use nhi hota usme then ke badle colon use hota hai, ek aur baat colon ke baad dusre line mein jaane ki zaroorat nhi hai, usi line pe aage ki baat likh sakte ho
 #Function -> Function -> what is the objective of making function and argumrnts(of three type variable,args,kwargs)
 #            for loop -> for i(elements) in datatype(list,range,tuples,dictionary,sets)
@@ -142,6 +162,11 @@ df.shape is a tuple and not list. So it cannot be edited/change by me.
 6.df.duplicates().sum()  => To check in the overall data whether it contains duplicates rows
 7. If else condition-> df['attrition']=np.where(df['event']=='Close',1,0)
 #For every column we need to check above six thing
+
+a='l'
+if type(a)==int:
+    print('if condition ka yeh bhi use hai,jo mujhe pata nhi tha')
+else:  print('aapne string daala hai')   
 
 #proc sql group by
 final_attr_seg=df.groupby(['segment']).agg({'act_bal_cap':'mean',
